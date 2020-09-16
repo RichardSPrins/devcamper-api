@@ -15,9 +15,9 @@ exports.protect = asyncHandler(async (req, res, next) => {
     token = req.headers.authorization.split(' ')[1];
     // Set token from cookie
   }
-  // else if (req.cookies.token) {
-  //   token = req.cookies.token;
-  // }
+  else if (req.cookies.token) {
+    token = req.cookies.token;
+  }
 
   // Make sure token exists
   if (!token) {
@@ -27,7 +27,7 @@ exports.protect = asyncHandler(async (req, res, next) => {
   try {
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
+  // user is set to the request here (req.user) by checking the id on the decoded token
     req.user = await User.findById(decoded.id);
 
     next();

@@ -4,10 +4,6 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const UserSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: [true, 'Please add a name']
-  },
   email: {
     type: String,
     required: [true, 'Please add an email'],
@@ -19,8 +15,7 @@ const UserSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['user', 'publisher'],
-    default: 'user'
+    enum: ['candidate', 'company', 'recruiter', 'admin'],
   },
   password: {
     type: String,
@@ -33,7 +28,16 @@ const UserSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
-  }
+  },
+  _candidate                : {type: String, ref: 'candidate'},
+  _recruiter                : {type: String, ref: 'recruiter'},
+  _company                  : {type: String, ref: 'company'},
+  isApproved                : {type: Boolean, default: false},
+  isRejected                : {type: Boolean, default: false},
+  isConfirmed               : {type: Boolean, default: false},
+  isFinished                : {type: Boolean, default: false},
+  // for data/authentication with linked in
+  linkedInData: {}
 });
 
 // Encrypt password using bcrypt

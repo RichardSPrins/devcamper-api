@@ -13,7 +13,15 @@ const hpp = require('hpp');
 const cors = require('cors');
 const errorHandler = require('./middleware/error');
 const connectDB = require('./config/db');
+const AdminBro = require('admin-bro')
+const AdminBroExpress = require('admin-bro-expressjs')
 
+const adminBro = new AdminBro({
+  databases: [],
+  rootPath: '/admin',
+})
+
+const adminBroRouter = AdminBroExpress.buildRouter(adminBro)
 // Load env vars
 dotenv.config({ path: './config/config.env' });
 
@@ -21,11 +29,15 @@ dotenv.config({ path: './config/config.env' });
 connectDB();
 
 // Route files
-const bootcamps = require('./routes/bootcamps');
-const courses = require('./routes/courses');
 const auth = require('./routes/auth');
 const users = require('./routes/users');
+const bootcamps = require('./routes/bootcamps');
+const courses = require('./routes/courses');
+const matches = require('./routes/matches')
 const reviews = require('./routes/reviews');
+const candidates = require('./routes/candidates');
+const companies = require('./routes/companies')
+
 
 const app = express();
 
@@ -69,10 +81,14 @@ app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Mount routers
-app.use('/api/v1/bootcamps', bootcamps);
-app.use('/api/v1/courses', courses);
+app.use(adminBro.options.rootPath, adminBroRouter)
 app.use('/api/v1/auth', auth);
 app.use('/api/v1/users', users);
+app.use('/api/v1/candidates', candidates);
+app.use('/api/v1/companies', companies);
+app.use('/api/v1/matches', matches);
+app.use('/api/v1/bootcamps', bootcamps);
+app.use('/api/v1/courses', courses);
 app.use('/api/v1/reviews', reviews);
 
 app.use(errorHandler);

@@ -3,6 +3,9 @@ const ErrorResponse = require('../utils/errorResponse');
 const asyncHandler = require('../middleware/async');
 const sendEmail = require('../utils/sendEmail');
 const User = require('../models/User');
+const Candidate = require('../models/Candidate')
+const Company = require('../models/Company')
+const Recruiter = require('../models/recruiter')
 
 // @desc      Register user
 // @route     POST /api/v1/auth/register
@@ -17,6 +20,20 @@ exports.register = asyncHandler(async (req, res, next) => {
     password,
     role
   });
+  switch(role){
+    case 'candidate':
+      await Candidate.create({
+        user: user._id
+      })
+      break;
+    case 'company':
+      await Company.create({
+        user: user._id
+      })
+      break;
+      default:
+        break;
+  }
 
   sendTokenResponse(user, 200, res);
 });
@@ -69,10 +86,20 @@ exports.logout = asyncHandler(async (req, res, next) => {
 // @access    Private
 exports.getMe = asyncHandler(async (req, res, next) => {
   const user = await User.findById(req.user.id);
+  let profile;
+  switch (user.role) {
+    case 'company':
+      profile = await Company.findOne({user: req.user.id})
+      break;
+    case 'candidate':
+      profile = await Candidate.findOne({user: req.user.id})
+    default:
+      break;
+  }
 
   res.status(200).json({
     success: true,
-    data: user
+    data: profile
   });
 });
 
@@ -183,7 +210,7 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
 });
 
 // Get token from model, create cookie and send response
-const sendTokenResponse = (user, statusCode, res) => {
+const sendTokenResponse = async (user, statusCode, res) => {
   // Create token
   const token = user.getSignedJwtToken();
 
@@ -198,11 +225,14 @@ const sendTokenResponse = (user, statusCode, res) => {
     options.secure = true;
   }
 
+  const currentUser = await User.findById(user._id).select('-password ')
   res
     .status(statusCode)
     .cookie('token', token, options)
+    .cookie('user', currentUser, options)
     .json({
       success: true,
-      token
+      token,
+      user: currentUser
     });
 };

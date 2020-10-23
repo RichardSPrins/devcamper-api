@@ -19,6 +19,7 @@ var MatchingSchema = Schema({
   company: {brief},
 
   isApproved: {type: Boolean, default: false},
+  isCompanyApproved: {type: Boolean, default: false},
 
 
 },{timestamps:true});

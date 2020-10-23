@@ -29,13 +29,16 @@ const UserSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
-  _candidate                : {type: String, ref: 'candidate'},
-  _recruiter                : {type: String, ref: 'recruiter'},
-  _company                  : {type: String, ref: 'company'},
+  candidate                 : {type: String, ref: 'candidate'},
+  recruiter                 : {type: String, ref: 'recruiter'},
+  company                   : {type: String, ref: 'company'},
   isApproved                : {type: Boolean, default: false},
   isRejected                : {type: Boolean, default: false},
   isConfirmed               : {type: Boolean, default: false},
   isFinished                : {type: Boolean, default: false},
+  followers                 : [{type: String, ref: 'user'}],
+  following                 : [{type: String, ref: 'user'}],
+
   // for data/authentication with linked in
   linkedInData: {}
 });

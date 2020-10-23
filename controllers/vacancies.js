@@ -6,94 +6,150 @@ const Company = require('../models/Company')
 const Vacancy = require('../models/Vacancy')
 const ErrorResponse = require('../utils/errorResponse')
 const Recruiter = require('../models/recruiter')
+const Course = require('../models/Course');
+const Bootcamp = require('../models/Bootcamp');
 
-//  @desc     Get All Matches
-//  @route    GET /api/v1/matches
-//  @access   public
-exports.getMatches = async (req, res, next) => {
-  const user = await req.user
-  const role = user.role
-  let profile;
-  let matches = [];
-  let matchesDetailList;
-  switch(role){
-    case 'candidate':
-      profile = await Candidate.findById(user._candidate)
-      matches = await Match.find({ _candidate: user._candidate})
-      matchesDetailList = await Promise.all(matches.map( async match => {
-        let vacancy = await Vacancy.findById(match._vacancy)
-        let company = await Company.findById(match._company)
-        return {
-          match,
-          candidate: profile,
-          vacancy,
-          company
-        }
-      }))
-      break
-    case 'company':
-      profile = await Company.findById(user._company)
-      matches = await Match.find({ _company: user._company})
-      matchesDetailList = await Promise.all(matches.map( async match => {
-        let vacancy = await Vacancy.findById(match._vacancy)
-        let candidate = await Candidate.findById(match._candidate)
-        return {
-          match,
-          company: profile,
-          vacancy,
-          candidate
-        }
-      }))
-      break
-    default: break
-  }
-  res.status(200).json(matchesDetailList)
-}
+// @desc      Get vacancies
+// @route     GET /api/v1/vacancies
+// @route     GET /api/v1/companies/:companyId/vacancies
+// @access    Public
 
-exports.getMatch = async (req, res, next) => {
-  try {
-    const user = await User.findById(req.user._id)
-    const match = await Match.findById(req.params.id)
-    const candidate = await Candidate.findById(match._candidate)
-    const company = await Company.findById(match._company)
-    const vacancy = await Vacancy.findById(match._vacancy)
-    let matchObj = {}
+exports.getVacancies = asyncHandler(async (req, res, next) => {
+  if (req.params.companyId) {
 
-    if(user._id == candidate.user || user._id == company.user){
-      matchObj = {
-        match,
-        candidate,
-        company,
-        vacancy
-      }
-    }
-
-    if(!match){
-      return res.status(404).json({
-        success: false,
-        message: 'This matchdoes not exist'
-      })
-    }
-
-    res.status(200).json({
+    const vacancies = await Vacancy.find({ company: req.params.companyId });
+    // console.log(vacancies)
+    return res.status(200).json({
       success: true,
-      data: matchObj
-    })
-    
-  } catch (error) {
-    res.status(400).send(error)
-    next()
+      count: vacancies.length,
+      data: vacancies
+    });
+  } else {
+    res.status(200).json(res.advancedResults);
   }
-}
+});
 
-exports.createMatch = async (req, res, next) => {
+// @desc      Get single vacancy
+// @route     GET /api/v1/vacancies/:id
+// @access    Public
+exports.getVacancy = asyncHandler(async (req, res, next) => {
+  const vacancy = await Vacancy.findById(req.params.id).populate({
+    path: 'company',
+    select: 'name description CEO'
+  });
 
-}
+  if (!vacancy) {
+    return next(
+      new ErrorResponse(`No vacancy with the id of ${req.params.id}`, 404)
+    );
+  }
 
-exports.updateMatch = async (req, res, next) => {
+  res.status(200).json({
+    success: true,
+    data: vacancy
+  });
+});
 
-}
+// @desc      Add vacancy
+// @route     POST /api/v1/companies/:companyId/vacancies
+// @access    Private
+exports.addVacancy = asyncHandler(async (req, res, next) => {
+  req.body._company = req.params.companyId;
+  // req.body.user = req.user.id;
 
-exports.deleteMatch = async (req, res, next) => {
+  const company = await Company.findById(req.params.companyId);
 
-}
+  if (!company) {
+    return next(
+      new ErrorResponse(
+        `No company with the id of ${req.params.companyId}`,
+        404
+      )
+    );
+  }
+
+  // Make sure user is bootcamp owner
+  if (company.user.toString() !== req.user.id/* && req.user.role !== 'admin'*/) {
+    return next(
+      new ErrorResponse(
+        `User ${req.user.id} is not authorized to add a course to company ${company._id}`,
+        401
+      )
+    );
+  }
+
+  const vacancy = await Vacancy.create(req.body);
+
+  res.status(200).json({
+    success: true,
+    data: vacancy
+  });
+});
+
+// @desc      Update vacancy
+// @route     PUT /api/v1/vacancies/:id
+// @access    Private
+exports.updateVacancy = asyncHandler(async (req, res, next) => {
+  let vacancy = await Vacancy.findById(req.params.id);
+  console.log(vacancy)
+
+  if (!vacancy) {
+    return next(
+      new ErrorResponse(`No vacancy with the id of ${req.params.id}`, 404)
+    );
+  }
+
+  // Make sure user is vacancy owner
+  if (vacancy.company.toString() !== req.user.company/* && req.user.role !== 'admin'*/) {
+    return next(
+      new ErrorResponse(
+        `User ${req.user.id} is not authorized to update vacancy ${vacancy._id}`,
+        401
+      )
+    );
+  }
+
+  vacancy = await Vacancy.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true
+  });
+
+  vacancy.save();
+
+  res.status(200).json({
+    success: true,
+    data: vacancy
+  });
+});
+
+// @desc      Delete vacancy
+// @route     DELETE /api/v1/vacancies/:id
+// @access    Private
+exports.deleteVacancy = asyncHandler(async (req, res, next) => {
+  const vacancy = await Vacancy.findById(req.params.id);
+
+  if (!vacancy) {
+    return next(
+      new ErrorResponse(`No vacancy with the id of ${req.params.id}`, 404)
+    );
+  }
+
+  // Make sure user is vacancy owner
+  if (vacancy._company.toString() !== req.user._company/* && req.user.role !== 'admin'*/) {
+    return next(
+      new ErrorResponse(
+        `User ${req.user.id} is not authorized to delete vacancy ${vacancy._id}`,
+        401
+      )
+    );
+  }
+
+  await vacancy.remove();
+
+  res.status(200).json({
+    success: true,
+    data: {}
+  });
+});
+
+

@@ -1,28 +1,43 @@
-const express = require('express')
-const Company = require('../models/Company')
-const User = require('../models/User')
-const { protect, authorize } = require('../middleware/auth');
-
-
-const { 
-  getCompany,
+const express = require('express');
+const {
   getCompanies,
+  getCompany,
   createCompany,
-  updateCompany,
-  deleteCompany
-} = require('../controllers/companies')
+  updateCompanyProfile,
+  deleteCompanyProfile,
+  getCompaniesInRadius,
+  companyPhotoUpload
+} = require('../controllers/companies');
 
-const router = express.Router()
+// Include other resource routers
+const vacancyRouter = require('./vacancies');
+const reviewRouter = require('./reviews');
+
+const router = express.Router();
+
+const advancedResults = require('../middleware/advancedResults');
+const { protect, authorize } = require('../middleware/auth');
+const Company = require('../models/Company');
+
+// // Re-route into other resource routers
+router.use('/:companyId/vacancies', vacancyRouter);
+// router.use('/:bootcampId/reviews', reviewRouter);
+
+router.route('/radius/:zipcode/:distance').get(getCompaniesInRadius);
+
+router
+  .route('/:id/photo')
+  .put(protect, authorize('company', 'admin'), companyPhotoUpload);
 
 router
   .route('/')
-  .get(getCompanies)
-  .post(createCompany)
+  .get(advancedResults(Company, 'vacancies'), getCompanies)
+  .post(protect, authorize('company', 'admin'), createCompany);
 
 router
   .route('/:id')
   .get(getCompany)
-  .put(updateCompany)
-  .delete(deleteCompany)
+  .put(protect, authorize('company', 'admin'), updateCompanyProfile)
+  .delete(protect, authorize('company', 'admin'), deleteCompanyProfile);
 
-  module.exports = router
+module.exports = router;

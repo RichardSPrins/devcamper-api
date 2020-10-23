@@ -1,15 +1,13 @@
 const express = require('express');
 const {
-  getBootcamps,
-  getBootcamp,
-  createBootcamp,
-  updateBootcamp,
-  deleteBootcamp,
-  getBootcampsInRadius,
-  bootcampPhotoUpload
-} = require('../controllers/bootcamps');
-
-const Bootcamp = require('../models/Bootcamp');
+  getCompanies,
+  getCompany,
+  createCompany,
+  updateCompanyProfile,
+  deleteCompanyProfile,
+  getCompaniesInRadius,
+  companyPhotoUpload
+} = require('../controllers/companies');
 
 // Include other resource routers
 const courseRouter = require('./courses');
@@ -19,26 +17,27 @@ const router = express.Router();
 
 const advancedResults = require('../middleware/advancedResults');
 const { protect, authorize } = require('../middleware/auth');
+const Company = require('../models/Company');
 
-// Re-route into other resource routers
-router.use('/:bootcampId/courses', courseRouter);
-router.use('/:bootcampId/reviews', reviewRouter);
+// // Re-route into other resource routers
+// router.use('/:bootcampId/courses', courseRouter);
+// router.use('/:bootcampId/reviews', reviewRouter);
 
-router.route('/radius/:zipcode/:distance').get(getBootcampsInRadius);
+router.route('/radius/:zipcode/:distance').get(getCompaniesInRadius);
 
 router
   .route('/:id/photo')
-  .put(protect, authorize('publisher', 'admin'), bootcampPhotoUpload);
+  .put(protect, authorize('company', 'admin'), companyPhotoUpload);
 
 router
   .route('/')
-  .get(advancedResults(Bootcamp, 'courses'), getBootcamps)
-  .post(protect, authorize('publisher', 'admin'), createBootcamp);
+  .get(advancedResults(Company, 'vacancies'), getCompanies)
+  .post(protect, authorize('company', 'admin'), createCompany);
 
 router
   .route('/:id')
-  .get(getBootcamp)
-  .put(protect, authorize('publisher', 'admin'), updateBootcamp)
-  .delete(protect, authorize('publisher', 'admin'), deleteBootcamp);
+  .get(getCompany)
+  .put(protect, authorize('company', 'admin'), updateCompanyProfile)
+  .delete(protect, authorize('company', 'admin'), deleteCompanyProfile);
 
 module.exports = router;

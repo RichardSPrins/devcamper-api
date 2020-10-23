@@ -5,19 +5,19 @@ const Schema = mongoose.Schema;
 
 const CompanySchema = new Schema({
     user: { type: String, ref: 'user', required: true },
-    name: { type: String, unique: true },
-    type: { type: [String] },
+    name: { type: String },
+    type: { type: String },
     foundDate: { type: String },
     employeesAmount: { type: String },
-    recruiters: [{ type: String, ref: 'recruiter'}],
+    recruiters: [{ type: mongoose.Types.ObjectId, ref: 'recruiter' }],
     headquartersLocation: { type: String },
     headquartersCoordinates: { lat: { type: String }, lng: { type: String } },
     values: [{ type: String, default: [] }],
     socialMedia: {
         websiteUrl: { type: String, },
-        linkedInUrl: { type: String/*, required: true*/ },
-        twitterAcc: { type: String/*, required: true*/ },
-        facebookUrl: { type: String/*, required: true*/ }
+        linkedInUrl: { type: String },
+        twitterAcc: { type: String },
+        facebookUrl: { type: String }
     },
     // optional fields
     locationOffices: [{
@@ -36,11 +36,23 @@ const CompanySchema = new Schema({
 }, { timestamps: true });
 
 
-CompanySchema.virtual('brief').get(function() {
-    const {name, type, foundDate, logo, background, headquartersLocation, socialMedia} = this;
-    return {name, type, foundDate, logo, background, headquartersLocation, socialMedia};
-})
+CompanySchema.pre('remove', async function (next) {
+    console.log(`Vacancies being removed from company ${this._id}`);
+    await this.model('vacancy').deleteMany({ company: this._id });
+    next();
+});
 
+CompanySchema.virtual('vacancies', {
+    ref: 'vacancy',
+    localField: '_id',
+    foreignField: 'company',
+    justOne: false
+});
+
+CompanySchema.virtual('brief').get(function () {
+    const { name, type, foundDate, logo, background, headquartersLocation, socialMedia } = this;
+    return { name, type, foundDate, logo, background, headquartersLocation, socialMedia };
+})
 const Company = mongoose.model('company', CompanySchema);
 
 module.exports = Company;

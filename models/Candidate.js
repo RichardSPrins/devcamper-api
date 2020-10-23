@@ -6,18 +6,18 @@ const Schema = mongoose.Schema;
 
 const CandidateSchema = Schema({
   user: { type: String, ref: 'user', required: true },
-  firstName: { type: String, required: true },
-  lastName: { type: String, required: true },
+  firstName: { type: String },
+  lastName: { type: String },
   active: { type: Boolean, default: true},
   completionProgress: {type: Number, default: 0},
   completeProfile: {type: Boolean, default: false},
   employments: [{ type: String, inclusion: matching.EMPLOYMENTS, default: [] }],
   // CURRENT_INDUSTRIES enums (1 page on onboarding)
-  interestWorkingArea: { type: [String], required: true },
+  interestWorkingArea: { type: [String] },
   // CURRENT_JOBS (3 page on onboarding)
-  recentJob: { type: String, required: true },
+  recentJob: { type: String },
   // CURRENT_EXPERIENCE enums (2 page on onboarding)
-  recentWorkingAreas: { type: [{parent: String, value: String}], required: true },
+  recentWorkingAreas: { type: [{parent: String, value: String}] },
   // VALUE_ASSESSMENTS enums (new page)
   values: [{type: String, enum: matching.VALUE_ASSESSMENTS, default: []}],
   recentAreaExperience: { type: String, required: true, enum: matching.EXPERIENCES },
@@ -35,8 +35,7 @@ const CandidateSchema = Schema({
     duty: { type: String },
     startWorkingAt: { type: String },
     endWorkingAt: { type: String },
-    isCurrentJob: { type: Boolean },
-    default: [],
+    isCurrentJob: { type: Boolean, default: false},
   }],
   interests: [{
     image: { type: String },
@@ -46,6 +45,7 @@ const CandidateSchema = Schema({
     type: String,
     enum: matching.DEGREES,
   },
+  personality: [{type: String}],
   education: [{
     schoolName: { type: String },
     specialty: { type: String },
@@ -58,7 +58,7 @@ const CandidateSchema = Schema({
       default: matching.DEGREE.BACHELORS,
     },
   }],
-  location: { type: String, required: true },
+  location: { type: String },
   locationCoordinates: {lat: {type: String}, lng: {type: String}},
   abilityToRelocate: { type: Boolean, default: false },
   socialMedia: {
@@ -68,15 +68,15 @@ const CandidateSchema = Schema({
   },
 }, { timestamps: true });
 
-// CandidateSchema.virtual('brief').get(function () {
-//   const {
-//     avatar, location, firstName, lastName, recentWorkingAreas, socialMedia, resumeId,
-//   } = this;
-//   return {
-//     avatar, location, firstName, lastName, recentWorkingAreas, socialMedia, resumeId,
-//   };
-// });
+CandidateSchema.virtual('brief').get(function () {
+  const {
+    avatar, location, firstName, lastName, recentWorkingAreas, socialMedia, resumeId,
+  } = this;
+  return {
+    avatar, location, firstName, lastName, recentWorkingAreas, socialMedia, resumeId,
+  };
+});
 
-const Candidate = mongoose.model('candidates', CandidateSchema);
+const Candidate = mongoose.model('candidate', CandidateSchema);
 
 module.exports = Candidate;

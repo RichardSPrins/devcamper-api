@@ -11,30 +11,41 @@ const Recruiter = require('../models/recruiter')
 // @route     POST /api/v1/auth/register
 // @access    Public
 exports.register = asyncHandler(async (req, res, next) => {
-  const { name, email, password, role } = req.body;
+  const {  email, password, role, name } = req.body;
 
   // Create user
   const user = await User.create({
-    name,
     email,
     password,
     role
   });
+
+  let profile;
+
   switch(role){
     case 'candidate':
-      await Candidate.create({
+      profile = await Candidate.create({
         user: user._id
       })
+      await User.findByIdAndUpdate(user._id, { candidate: profile._id })
       break;
     case 'company':
-      await Company.create({
-        user: user._id
+      profile = await Company.create({
+        user: user._id,
+        name,
       })
+    await User.findByIdAndUpdate(user._id, { company: profile._id })
       break;
+    case 'recruiter':
+      profile = await Recruiter,create({
+        user: user._id,
+        firstName: name
+      })
+      await User.findByIdAndUpdate(user._id, { recruiter: profile._id})
       default:
         break;
   }
-
+  
   sendTokenResponse(user, 200, res);
 });
 
@@ -86,13 +97,16 @@ exports.logout = asyncHandler(async (req, res, next) => {
 // @access    Private
 exports.getMe = asyncHandler(async (req, res, next) => {
   const user = await User.findById(req.user.id);
+  console.log(user)
   let profile;
   switch (user.role) {
     case 'company':
-      profile = await Company.findOne({user: req.user.id})
+      profile = await Company.findOne({user: user._id})
+      console.log(profile)
       break;
     case 'candidate':
-      profile = await Candidate.findOne({user: req.user.id})
+      profile = await Candidate.findOne({user: user._id})
+      console.log(profile)
     default:
       break;
   }

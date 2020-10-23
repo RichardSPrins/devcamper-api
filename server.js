@@ -32,6 +32,7 @@ connectDB();
 const auth = require('./routes/auth');
 const users = require('./routes/users');
 const bootcamps = require('./routes/bootcamps');
+const vacancies = require('./routes/vacancies')
 const courses = require('./routes/courses');
 const matches = require('./routes/matches')
 const reviews = require('./routes/reviews');
@@ -87,12 +88,17 @@ app.use('/api/v1/users', users);
 app.use('/api/v1/candidates', candidates);
 app.use('/api/v1/companies', companies);
 app.use('/api/v1/matches', matches);
-app.use('/api/v1/bootcamps', bootcamps);
+app.use('/api/v1/vacancies', vacancies)
+// app.use('/api/v1/bootcamps', bootcamps); 
 app.use('/api/v1/courses', courses);
 app.use('/api/v1/reviews', reviews);
 
 app.use(errorHandler);
-
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
 const PORT = process.env.PORT || 5000;
 
 const server = app.listen(

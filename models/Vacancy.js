@@ -11,7 +11,7 @@ var VacancySchema = Schema({
     // CURRENT_INDUSTRIES enums
     industries      : {type: [{parent: String, value: String}], required: true},
     salary   : {type: String, enum: matching.RECENT_ANNUAL_INCOMES, required: true},
-    _company  : {type: String, ref: 'company', required: true},
+    company  : {type: String, ref: 'company', required: true},
     recruiter: {type: String, ref: 'recruiter', required: true},
     // we gonna compare this field with users total experience field
     experience: {type: String, enum: matching.EXPERIENCES.concat(null), default: null},
@@ -28,7 +28,7 @@ var VacancySchema = Schema({
         count: {type: Number, min: 0, default: 0},
         briefs: [ brief ]
     },
-    company: { brief },
+    // company: { brief },
 		publishedAt: { type: Date},
 		closedAt: { type: Date},
 		closeFormResponse: { type: String },
